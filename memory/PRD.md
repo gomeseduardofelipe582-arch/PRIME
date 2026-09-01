@@ -72,3 +72,8 @@ Revendedor/atendente comercial que cadastra alunos, cria matrículas, acompanha 
 - Simplificada exclusivamente a página `/relatorios`: removidos gráficos de curso, categoria, campanha e origem.
 - Mantido somente o gráfico "Evolução das matrículas" e adicionados KPIs, destaques e rankings tabulares para decisão comercial.
 - Verificado em build de produção e em prévia desktop/mobile, incluindo troca para o filtro de 7 dias sem overflow horizontal.
+
+## 2026-09 — Preparação visual dos rankings
+- Os rankings de Relatórios agora exibem posição, quantidade de resultados e o critério de ordenação por matrículas.
+- Incluídos estados visuais de atualização e carregamento, prontos para a futura troca da fonte de dados sem conectar backend agora.
+- Em telas móveis, cada ranking passa a exibir todas as métricas por item, sem exigir rolagem horizontal da página.

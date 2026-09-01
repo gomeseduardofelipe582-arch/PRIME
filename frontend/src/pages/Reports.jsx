@@ -90,7 +90,7 @@ function addRankingRow(map, key, details) {
 }
 
 export default function Reports() {
-  const { enrollments, courses, campaigns } = useData();
+  const { enrollments, courses, campaigns, loading } = useData();
   const [preset, setPreset] = useState("30dias");
   const [custom, setCustom] = useState({ start: "", end: "" });
 
@@ -240,6 +240,7 @@ export default function Reports() {
           title="Cursos mais vendidos"
           columns={["Curso", "Matrículas", "Receita", "Margem"]}
           rows={rankings.courseRows}
+          loading={loading}
           testId="report-top-courses-table"
           renderRow={(row) => [
             row.course,
@@ -252,6 +253,7 @@ export default function Reports() {
           title="Campanhas com melhor resultado"
           columns={["Campanha", "Canal", "Matrículas", "Receita", "Margem"]}
           rows={rankings.campaignRows}
+          loading={loading}
           testId="report-top-campaigns-table"
           renderRow={(row) => [
             row.campaign,
@@ -265,6 +267,7 @@ export default function Reports() {
           title="Origem das vendas"
           columns={["Origem", "Matrículas", "Receita", "Margem"]}
           rows={rankings.originRows}
+          loading={loading}
           testId="report-sales-origin-table"
           renderRow={(row) => [
             row.origin,
@@ -278,15 +281,25 @@ export default function Reports() {
   );
 }
 
-function ReportCard({ title, testId, children }) {
+function ReportCard({ title, testId, meta, children }) {
   return (
     <section
       className="rounded-lg border border-slate-800 bg-slate-900/50 p-6"
       data-testid={testId}
     >
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-200">
-        {title}
-      </h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-200">
+          {title}
+        </h2>
+        {meta && (
+          <span
+            className="rounded-full border border-slate-800 bg-slate-950/60 px-2.5 py-1 text-xs text-slate-400"
+            data-testid={`${testId}-meta`}
+          >
+            {meta}
+          </span>
+        )}
+      </div>
       {children}
     </section>
   );
@@ -309,12 +322,17 @@ function Highlight({ label, value, detail, testId }) {
   );
 }
 
-function RankingTable({ title, columns, rows, renderRow, testId }) {
+function RankingTable({ title, columns, rows, loading, renderRow, testId }) {
+  const resultLabel = rows.length === 1 ? "resultado" : "resultados";
+  const meta = loading
+    ? "Atualizando dados"
+    : `${rows.length} ${resultLabel} · Por matrículas`;
+
   return (
-    <ReportCard title={title} testId={testId}>
-      <div className="overflow-x-auto">
+    <ReportCard title={title} testId={testId} meta={meta}>
+      <div className="hidden sm:block">
         <table
-          className="w-full min-w-[640px] text-left"
+          className="w-full text-left"
           data-testid={`${testId}-content`}
         >
           <thead>
@@ -333,7 +351,8 @@ function RankingTable({ title, columns, rows, renderRow, testId }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, rowIndex) => (
+            {loading && <RankingTableSkeleton columns={columns} testId={testId} />}
+            {!loading && rows.map((row, rowIndex) => (
               <tr
                 key={row.course || row.campaign || row.origin}
                 className="border-b border-slate-800/70 last:border-0"
@@ -345,11 +364,23 @@ function RankingTable({ title, columns, rows, renderRow, testId }) {
                     className={`py-3.5 text-sm ${
                       valueIndex === 0
                         ? "max-w-[300px] truncate font-medium text-slate-200"
+                        : valueIndex === columns.length - 1
+                          ? "text-right font-semibold text-emerald-400"
                         : "text-right text-slate-400"
                     }`}
                     data-testid={`${testId}-row-${rowIndex}-cell-${valueIndex}`}
                   >
-                    {value}
+                    {valueIndex === 0 ? (
+                      <span className="flex items-center gap-3">
+                        <span
+                          className="w-6 shrink-0 font-mono text-xs text-slate-500"
+                          data-testid={`${testId}-row-${rowIndex}-position`}
+                        >
+                          {String(rowIndex + 1).padStart(2, "0")}
+                        </span>
+                        <span className="truncate">{value}</span>
+                      </span>
+                    ) : value}
                   </td>
                 ))}
               </tr>
@@ -357,7 +388,19 @@ function RankingTable({ title, columns, rows, renderRow, testId }) {
           </tbody>
         </table>
       </div>
-      {rows.length === 0 && (
+      <div className="sm:hidden" data-testid={`${testId}-mobile-content`}>
+        {loading && <MobileRankingSkeleton columns={columns} testId={testId} />}
+        {!loading && rows.map((row, rowIndex) => (
+          <MobileRankingRow
+            key={row.course || row.campaign || row.origin}
+            columns={columns}
+            values={renderRow(row)}
+            rowIndex={rowIndex}
+            testId={testId}
+          />
+        ))}
+      </div>
+      {!loading && rows.length === 0 && (
         <p
           className="py-3 text-sm text-slate-500"
           data-testid={`${testId}-empty-state`}
@@ -367,4 +410,90 @@ function RankingTable({ title, columns, rows, renderRow, testId }) {
       )}
     </ReportCard>
   );
+}
+
+function MobileRankingRow({ columns, values, rowIndex, testId }) {
+  const metrics = values.slice(1);
+  const metricGrid = metrics.length === 4 ? "grid-cols-2" : "grid-cols-3";
+
+  return (
+    <div
+      className="border-b border-slate-800/70 py-4 first:pt-0 last:border-0 last:pb-0"
+      data-testid={`${testId}-mobile-row-${rowIndex}`}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <span
+          className="w-6 shrink-0 font-mono text-xs text-slate-500"
+          data-testid={`${testId}-mobile-row-${rowIndex}-position`}
+        >
+          {String(rowIndex + 1).padStart(2, "0")}
+        </span>
+        <span
+          className="truncate text-sm font-medium text-slate-200"
+          data-testid={`${testId}-mobile-row-${rowIndex}-label`}
+        >
+          {values[0]}
+        </span>
+      </div>
+      <div className={`mt-3 grid gap-3 ${metricGrid}`}>
+        {metrics.map((value, metricIndex) => (
+          <div
+            key={columns[metricIndex + 1]}
+            className="min-w-0"
+            data-testid={`${testId}-mobile-row-${rowIndex}-metric-${metricIndex}`}
+          >
+            <p className="text-xs uppercase tracking-wide text-slate-500">
+              {columns[metricIndex + 1]}
+            </p>
+            <p
+              className={`mt-1 truncate text-xs font-semibold ${
+                metricIndex === metrics.length - 1
+                  ? "text-emerald-400"
+                  : "text-slate-300"
+              }`}
+            >
+              {value}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RankingTableSkeleton({ columns, testId }) {
+  return Array.from({ length: 3 }, (_, rowIndex) => (
+    <tr
+      key={`loading-${rowIndex}`}
+      className="border-b border-slate-800/70 last:border-0"
+      data-testid={`${testId}-loading-row-${rowIndex}`}
+    >
+      {columns.map((column, columnIndex) => (
+        <td key={column} className="py-4">
+          <div
+            className={`h-3 animate-pulse rounded bg-slate-800/80 ${
+              columnIndex === 0 ? "w-3/4" : "ml-auto w-12"
+            }`}
+          />
+        </td>
+      ))}
+    </tr>
+  ));
+}
+
+function MobileRankingSkeleton({ columns, testId }) {
+  return Array.from({ length: 3 }, (_, rowIndex) => (
+    <div
+      key={`mobile-loading-${rowIndex}`}
+      className="border-b border-slate-800/70 py-4 first:pt-0 last:border-0 last:pb-0"
+      data-testid={`${testId}-mobile-loading-row-${rowIndex}`}
+    >
+      <div className="h-3 w-2/3 animate-pulse rounded bg-slate-800/80" />
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        {columns.slice(1).map((column) => (
+          <div key={column} className="h-3 animate-pulse rounded bg-slate-800/80" />
+        ))}
+      </div>
+    </div>
+  ));
 }
