@@ -1,0 +1,135 @@
+{
+  "theme": "dark",
+  "language": "pt-BR",
+  "app_type": "saas_crm",
+  "design_concept": "Tactical Minimalism - A highly professional, data-dense, dark-themed CRM tailored for course enrollment management. Prioritizes legibility, structured hierarchy, and efficiency without generic 'Bootstrap' aesthetics.",
+  "typography": {
+    "strategy": "Tech SaaS Geometric (High Legibility)",
+    "primary_font": "Outfit",
+    "primary_font_usage": "Headings, Numbers, Dashboard KPIs, Badges",
+    "secondary_font": "Manrope",
+    "secondary_font_usage": "Body text, Tables, Forms, Supporting text",
+    "install_command": "Use Google Fonts for Outfit and Manrope",
+    "hierarchy": {
+      "h1": "text-3xl sm:text-4xl font-bold tracking-tight text-slate-50",
+      "h2": "text-2xl sm:text-3xl font-semibold tracking-tight text-slate-100",
+      "h3": "text-xl font-semibold text-slate-100",
+      "kpi_value": "text-4xl font-bold text-white tracking-tighter",
+      "body": "text-sm text-slate-300 leading-relaxed",
+      "small_label": "text-xs font-semibold tracking-[0.05em] uppercase text-slate-400"
+    }
+  },
+  "colors": {
+    "strategy": "Deep Slate Base with High-Contrast Action Accents",
+    "background": {
+      "app": "bg-slate-950",
+      "sidebar": "bg-slate-900 border-r border-slate-800",
+      "card": "bg-slate-900/50",
+      "card_hover": "hover:bg-slate-800/80"
+    },
+    "text": {
+      "primary": "text-slate-50",
+      "secondary": "text-slate-300",
+      "muted": "text-slate-400",
+      "inverse": "text-slate-900"
+    },
+    "border": "border-slate-800",
+    "accents": {
+      "primary": "bg-indigo-600 hover:bg-indigo-500 text-white",
+      "secondary": "bg-slate-800 hover:bg-slate-700 text-slate-100",
+      "warning": "bg-amber-500 text-amber-950",
+      "success": "bg-emerald-500 text-emerald-950",
+      "danger": "bg-rose-500 text-rose-950"
+    },
+    "status_badges": {
+      "novo_cadastro": "bg-blue-500/20 text-blue-400 border border-blue-500/30",
+      "aguardando_documentos": "bg-amber-500/20 text-amber-400 border border-amber-500/30",
+      "documentacao_completa": "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+      "pronto_para_enviar": "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30",
+      "enviado_escola": "bg-purple-500/20 text-purple-400 border border-purple-500/30",
+      "matricula_confirmada": "bg-emerald-600/20 text-emerald-500 border border-emerald-600/30",
+      "cancelada": "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+    }
+  },
+  "visual_enhancers": {
+    "borders": "1px solid crisp borders (border-slate-800). No soft glowing dropshadows. Use inner borders to separate nested cards.",
+    "surfaces": "Flat Solid surfaces with subtle opacity (bg-slate-900/50). Avoid 'glassmorphism' for clinical/data apps to maintain clear data reading.",
+    "radius": "rounded-lg (8px) for cards/modals, rounded-md (6px) for buttons/inputs, rounded-full for avatars/badges.",
+    "textures": "Include a subtle noise overlay (opacity-5) over the main background to reduce digital flatness."
+  },
+  "layouts": {
+    "main_structure": "Left Sidebar (w-64 on desktop, hidden on mobile with hamburger toggle) + Main Content area.",
+    "dashboard_grid": "Mode B (High Density Grid). 4-column for KPI summaries (col-span-1), 3-column for charts (Main chart col-span-2, Secondary col-span-1).",
+    "wizard_layout": "Center-aligned multi-step form inside a max-w-3xl card with a top progress bar/stepper. Dynamic fields should animate smoothly.",
+    "table_layout": "Full-width Shadcn tables with sticky headers. Add an action column on the right. Search/Filters sit immediately above the table in a flex row.",
+    "spacing": "Generous internal padding (p-6 or p-8 for cards). Tight gaps for data items (gap-2 to gap-4)."
+  },
+  "components": {
+    "icons": {
+      "library": "@phosphor-icons/react",
+      "install": "yarn add @phosphor-icons/react",
+      "style": "duotone or regular, 20px/24px depending on hierarchy."
+    },
+    "toast": {
+      "library": "sonner",
+      "usage": "Use for 'WhatsApp message copied!', 'Enrollment saved', etc.",
+      "path": "/app/frontend/src/components/ui/sonner.js"
+    },
+    "charts": {
+      "library": "recharts",
+      "customization": "MUST use dark-first palette. Grid lines should be very subtle (#1e293b). Tooltips must have dark backgrounds and high contrast text."
+    },
+    "whatsapp_summary": {
+      "design": "A visually distinct card styled like a 'receipt' or 'ticket' in the summary step. Mono-spaced font for data fields to mimic plain text output. A prominent 'Copiar para WhatsApp' button."
+    },
+    "document_checklist": {
+      "design": "A vertical list of checkboxes. Unchecked: slate-400. Checked: emerald-400 with line-through on the text. Progress indicator (e.g., 2/4 documentos)."
+    }
+  },
+  "motion": {
+    "library": "framer-motion",
+    "page_transitions": "Fade-in with slight vertical slide: { opacity: 0, y: 10 } to { opacity: 1, y: 0 }",
+    "wizard_transitions": "Slide horizontally between steps. Use AnimatePresence for smooth entering/exiting.",
+    "micro_interactions": "Buttons: scale down on click (active:scale-95). Tables: slight bg color change on hover (hover:bg-slate-800/50)."
+  },
+  "media": {
+    "images": [
+      {
+        "category": "Login Background",
+        "url": "https://images.unsplash.com/photo-1462556791646-c201b8241a94?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHw0fHxtb2Rlcm4lMjBjb3Jwb3JhdGUlMjBhcmNoaXRlY3R1cmUlMjBkYXJrJTIwYWJzdHJhY3R8ZW58MHx8fHwxNzg4Mjk2OTM0fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Dark blue geometric glass architecture, perfect for an abstract corporate SaaS login backdrop. Overlay with a bg-slate-950/80 tint."
+      },
+      {
+        "category": "Avatar Placeholder",
+        "url": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwxfHxhdmF0YXJ8ZW58MHx8fHwxNzg4Mjk2OTM0fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Professional avatar placeholder for the fake login user."
+      }
+    ]
+  },
+  "accessibility": {
+    "contrast": "Ensure all text against slate-950/900 meets APCA standards. Muted text must be at least slate-400.",
+    "focus": "focus:ring-2 focus:ring-indigo-500 focus:outline-none focus:ring-offset-2 focus:ring-offset-slate-950",
+    "data_testid": "ALL interactive elements MUST have data-testid (e.g., 'nova-matricula-btn', 'wizard-next-btn', 'copy-whatsapp-btn')."
+  },
+  "instructions_to_main_agent": [
+    "Build the UI in React (.jsx or .js) using standard Tailwind CSS classes. No TypeScript (.tsx).",
+    "Apply dark mode natively (e.g., set root background to slate-950 and text to slate-50).",
+    "Construct the lateral menu (Dashboard, Nova Matrícula, Matrículas, Alunos, Cursos, Campanhas, Relatórios) with Phosphor Icons.",
+    "Dashboard must include: KPI cards (today/week/month enrollments, total sold, repasses, gross margin).",
+    "Dashboard Charts: Bar chart for 'Cursos mais vendidos', Line chart for evolution, Donut chart for origens/campanhas.",
+    "Create the 5-step Wizard for 'Nova Matrícula': 1. Course Category, 2. Student Data (dynamic), 3. Document Checklist (dynamic status), 4. Commercial Info (Lead origin, campaigns), 5. Review & Copy Summary.",
+    "Ensure the WhatsApp Summary feature generates a clean text format and utilizes Sonner toast upon successful clipboard copy.",
+    "Implement Shadcn components: Cards for layout, Table for listings, Badges for the 7 statuses, Input/Select for forms.",
+    "DO NOT add transparent backgrounds for dropdowns or modals. They must have solid slate-900 backgrounds with border-slate-800 to prevent overlap rendering issues.",
+    "Implement a Fake Login screen with the provided architectural image as a heavily tinted background, leading into the Dashboard upon clicking 'Entrar'."
+  ],
+  "universal_guidelines_for_main_agent": [
+    "You tend to converge toward generic outputs. Avoid 'AI slop' aesthetics. Use defined color palettes and typography.",
+    "Never apply 'transition: all'. Explicitly state transitions (e.g., 'transition-colors', 'transition-transform').",
+    "Do not center-align the app container (.App { text-align: center; } is banned). Left-align forms and data.",
+    "Use modern button styles (rounded-md, clear hover/active states).",
+    "Never use AI emoji characters (🤖🧠💡) for icons. Use Phosphor Icons.",
+    "All interactive elements MUST include a data-testid attribute.",
+    "Use sonner for toasts, not raw HTML alerts."
+  ]
+}
