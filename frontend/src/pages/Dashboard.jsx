@@ -19,7 +19,7 @@ export default function Dashboard() {
   const [preset, setPreset] = useState("30dias");
   const [custom, setCustom] = useState({ start: "", end: "" });
 
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
   const todayCount = enrollments.filter((e) => isWithinInterval(new Date(e.createdAt), { start: startOfDay(now), end: endOfDay(now) })).length;
   const weekCount = enrollments.filter((e) =>
     isWithinInterval(new Date(e.createdAt), { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) })
@@ -40,7 +40,7 @@ export default function Dashboard() {
   const studentName = (id) => students.find((s) => s.id === id)?.fullName || "—";
 
   const topCourses = useMemo(() => {
-    const grouped = groupCount(filtered, (e) => courseName(e.courseId));
+    const grouped = groupCount(filtered, (e) => courses.find((c) => c.id === e.courseId)?.name || "—");
     return grouped.sort((a, b) => b.value - a.value).slice(0, 5);
   }, [filtered, courses]);
 
@@ -58,7 +58,7 @@ export default function Dashboard() {
       days.push({ name: format(day, "dd/MM"), matriculas: count });
     }
     return days;
-  }, [enrollments]);
+  }, [enrollments, now]);
 
   const recent = useMemo(() => [...enrollments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5), [enrollments]);
 

@@ -58,3 +58,8 @@ Revendedor/atendente comercial que cadastra alunos, cria matrículas, acompanha 
 1. Validar fluxo completo com o usuário (dashboard → nova matrícula → resumo)
 2. Conectar Supabase substituindo `services/*.js`
 3. Adicionar autenticação real
+
+## 2026-06 — Verificação de erros
+- Removidos 5 avisos ESLint `react-hooks/exhaustive-deps` em Dashboard.jsx e Reports.jsx (lookups inlined nos useMemo; `now` memoizado).
+- Build compila sem warnings; 0 erros de console em todas as rotas.
+- Criado test_credentials.md (auth mockada).

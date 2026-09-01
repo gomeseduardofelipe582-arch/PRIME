@@ -22,12 +22,12 @@ export default function Reports() {
   );
   const filtered = useMemo(() => filterByRange(enrollments, range), [enrollments, range]);
 
-  const courseName = (id) => courses.find((c) => c.id === id)?.name || "—";
-  const categoryOf = (id) => courses.find((c) => c.id === id)?.category || "Outro";
-
   const periodSeries = useMemo(() => dailySeries(filtered, range), [filtered, range]);
-  const byCourse = useMemo(() => groupCount(filtered, (e) => courseName(e.courseId)).sort((a, b) => b.value - a.value), [filtered, courses]);
-  const byCategory = useMemo(() => groupCount(filtered, (e) => categoryOf(e.courseId)), [filtered, courses]);
+  const byCourse = useMemo(
+    () => groupCount(filtered, (e) => courses.find((c) => c.id === e.courseId)?.name || "—").sort((a, b) => b.value - a.value),
+    [filtered, courses]
+  );
+  const byCategory = useMemo(() => groupCount(filtered, (e) => courses.find((c) => c.id === e.courseId)?.category || "Outro"), [filtered, courses]);
   const byCampaign = useMemo(() => groupCount(filtered, (e) => e.campaign || "Sem campanha").sort((a, b) => b.value - a.value).slice(0, 6), [filtered]);
   const byOrigin = useMemo(() => groupCount(filtered, (e) => e.origin), [filtered]);
 
