@@ -1,18 +1,16 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarCheck, CurrencyCircleDollar, HandCoins, TrendUp, PlusCircle } from "@phosphor-icons/react";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, subDays } from "date-fns";
+import { isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { useData } from "@/context/DataContext";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { KpiCard } from "@/components/shared/KpiCard";
+import { MonthlyGoalCard } from "@/components/shared/MonthlyGoalCard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { PeriodFilter } from "@/components/shared/PeriodFilter";
 import { Button } from "@/components/ui/button";
 import { getPeriodRange, filterByRange, sumField, groupCount, groupSum } from "@/lib/analytics";
 import { formatCurrency, formatDate } from "@/lib/format";
-
-const tooltipStyle = { background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, fontSize: 12 };
 
 export default function Dashboard() {
   const { enrollments, courses, students, loading } = useData();
@@ -24,7 +22,9 @@ export default function Dashboard() {
   const weekCount = enrollments.filter((e) =>
     isWithinInterval(new Date(e.createdAt), { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) })
   ).length;
-  const monthCount = enrollments.filter((e) => isWithinInterval(new Date(e.createdAt), { start: startOfMonth(now), end: endOfMonth(now) })).length;
+  const monthEnrollments = enrollments.filter((e) => isWithinInterval(new Date(e.createdAt), { start: startOfMonth(now), end: endOfMonth(now) }));
+  const monthCount = monthEnrollments.length;
+  const monthRevenue = sumField(monthEnrollments, "salePrice");
 
   const range = useMemo(
     () => getPeriodRange(preset, { start: custom.start ? new Date(custom.start) : null, end: custom.end ? new Date(custom.end) : null }),
@@ -50,16 +50,6 @@ export default function Dashboard() {
     [filtered]
   );
 
-  const evolution = useMemo(() => {
-    const days = [];
-    for (let i = 13; i >= 0; i--) {
-      const day = subDays(now, i);
-      const count = enrollments.filter((e) => format(new Date(e.createdAt), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")).length;
-      days.push({ name: format(day, "dd/MM"), matriculas: count });
-    }
-    return days;
-  }, [enrollments, now]);
-
   const recent = useMemo(() => [...enrollments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5), [enrollments]);
 
   if (loading) return <div className="text-slate-400 text-sm">Carregando...</div>;
@@ -78,10 +68,13 @@ export default function Dashboard() {
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <KpiCard icon={CalendarCheck} label="Matrículas hoje" value={todayCount} accent="indigo" />
-        <KpiCard icon={CalendarCheck} label="Matrículas esta semana" value={weekCount} accent="indigo" />
-        <KpiCard icon={CalendarCheck} label="Matrículas este mês" value={monthCount} accent="indigo" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 content-start">
+          <KpiCard icon={CalendarCheck} label="Matrículas hoje" value={todayCount} accent="indigo" />
+          <KpiCard icon={CalendarCheck} label="Matrículas esta semana" value={weekCount} accent="indigo" hint="Segunda a domingo" />
+          <KpiCard icon={CalendarCheck} label="Matrículas este mês" value={monthCount} accent="indigo" hint={formatCurrency(monthRevenue) + " vendidos"} />
+        </div>
+        <MonthlyGoalCard monthRevenue={monthRevenue} monthCount={monthCount} />
       </div>
 
       <div className="mb-4">
@@ -94,56 +87,51 @@ export default function Dashboard() {
         <KpiCard icon={TrendUp} label="Margem bruta estimada" value={formatCurrency(totalMargin)} accent="purple" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <div className="lg:col-span-2 rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Evolução das matrículas (14 dias)</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={evolution}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-              <YAxis stroke="#64748b" fontSize={11} allowDecimals={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="matriculas" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Vendas por origem</h3>
-          <div className="space-y-3">
-            {byOrigin.map((o) => (
-              <div key={o.name} className="flex items-center justify-between text-sm">
-                <span className="text-slate-300">{o.name}</span>
-                <span className="text-slate-400 font-semibold">{o.value}</span>
-              </div>
-            ))}
-            {byOrigin.length === 0 && <p className="text-xs text-slate-500">Sem dados no período.</p>}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 items-start">
         <div className="lg:col-span-2 rounded-lg border border-slate-800 bg-slate-900/50 p-6">
           <h3 className="text-sm font-semibold text-slate-200 mb-4">Cursos mais vendidos</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={topCourses} layout="vertical" margin={{ left: 20, right: 16 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-              <XAxis type="number" stroke="#64748b" fontSize={11} allowDecimals={false} />
-              <YAxis type="category" dataKey="name" stroke="#64748b" fontSize={10} width={150} tick={{ width: 140 }} interval={0} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="space-y-4" data-testid="dashboard-top-courses">
+            {topCourses.map((c, i) => {
+              const max = topCourses[0]?.value || 1;
+              return (
+                <div key={c.name}>
+                  <div className="flex items-center justify-between text-sm mb-1.5">
+                    <span className="text-slate-300 truncate mr-3"><span className="text-slate-500 font-mono text-xs mr-2">{String(i + 1).padStart(2, "0")}</span>{c.name}</span>
+                    <span className="text-slate-200 font-semibold shrink-0">{c.value} {c.value === 1 ? "venda" : "vendas"}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                    <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.round((c.value / max) * 100)}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+            {topCourses.length === 0 && <p className="text-xs text-slate-500">Sem dados no período.</p>}
+          </div>
         </div>
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4">Vendas por campanha</h3>
-          <div className="space-y-3">
-            {byCampaign.map((c) => (
-              <div key={c.name} className="flex items-center justify-between text-sm">
-                <span className="text-slate-300 truncate mr-2">{c.name}</span>
-                <span className="text-slate-400 font-semibold shrink-0">{formatCurrency(c.value)}</span>
-              </div>
-            ))}
-            {byCampaign.length === 0 && <p className="text-xs text-slate-500">Sem dados no período.</p>}
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 space-y-6">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-200 mb-4">Vendas por origem</h3>
+            <div className="space-y-3">
+              {byOrigin.map((o) => (
+                <div key={o.name} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-300">{o.name}</span>
+                  <span className="text-slate-400 font-semibold">{o.value}</span>
+                </div>
+              ))}
+              {byOrigin.length === 0 && <p className="text-xs text-slate-500">Sem dados no período.</p>}
+            </div>
+          </div>
+          <div className="border-t border-slate-800 pt-6">
+            <h3 className="text-sm font-semibold text-slate-200 mb-4">Vendas por campanha</h3>
+            <div className="space-y-3">
+              {byCampaign.map((c) => (
+                <div key={c.name} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-300 truncate mr-2">{c.name}</span>
+                  <span className="text-slate-400 font-semibold shrink-0">{formatCurrency(c.value)}</span>
+                </div>
+              ))}
+              {byCampaign.length === 0 && <p className="text-xs text-slate-500">Sem dados no período.</p>}
+            </div>
           </div>
         </div>
       </div>

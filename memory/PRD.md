@@ -63,3 +63,7 @@ Revendedor/atendente comercial que cadastra alunos, cria matrículas, acompanha 
 - Removidos 5 avisos ESLint `react-hooks/exhaustive-deps` em Dashboard.jsx e Reports.jsx (lookups inlined nos useMemo; `now` memoizado).
 - Build compila sem warnings; 0 erros de console em todas as rotas.
 - Criado test_credentials.md (auth mockada).
+
+## 2026-06 — Meta do mês + limpeza de gráficos
+- Novo componente MonthlyGoalCard (barras de progresso R$ e matrículas, meta editável salva em localStorage `crm_monthly_goal`, default R$20.000/10).
+- Removidos gráficos Recharts do Dashboard (evolução 14 dias e barras de cursos) a pedido do usuário; "Cursos mais vendidos" agora é ranking em lista; origem+campanha no mesmo card.
