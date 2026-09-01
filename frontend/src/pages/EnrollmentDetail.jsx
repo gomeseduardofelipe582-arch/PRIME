@@ -38,6 +38,17 @@ export default function EnrollmentDetail() {
 
   const handlePrint = () => window.print();
 
+  const handleStatusChange = (nextStatus) => {
+    if (nextStatus === enrollment.status) return;
+    if (nextStatus === "cancelada" && !window.confirm("Cancelar esta matrícula? Essa ação altera o status do registro.")) return;
+
+    toast.promise(updateEnrollmentStatus(enrollment.id, nextStatus), {
+      loading: "Atualizando status...",
+      success: "Status da matrícula atualizado.",
+      error: "Não foi possível atualizar o status.",
+    });
+  };
+
   const toggleDoc = (doc, checked) => {
     updateEnrollmentDocuments(enrollment.id, { ...enrollment.documents, [doc]: checked });
   };
@@ -60,10 +71,10 @@ export default function EnrollmentDetail() {
             {course?.name} · {formatDate(enrollment.createdAt)} às {formatTime(enrollment.createdAt)}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
           <StatusBadge status={enrollment.status} />
-          <Select value={enrollment.status} onValueChange={(v) => updateEnrollmentStatus(enrollment.id, v)}>
-            <SelectTrigger className="w-56 bg-slate-900 border-slate-800 text-slate-100" data-testid="enrollment-status-select"><SelectValue /></SelectTrigger>
+          <Select value={enrollment.status} onValueChange={handleStatusChange}>
+            <SelectTrigger aria-label="Alterar status da matrícula" className="w-full bg-slate-900 border-slate-800 text-slate-100 sm:w-56" data-testid="enrollment-status-select"><SelectValue /></SelectTrigger>
             <SelectContent className="bg-slate-900 border-slate-800 text-slate-100">
               {STATUS_LIST.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
             </SelectContent>
