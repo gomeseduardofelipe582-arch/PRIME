@@ -16,7 +16,7 @@ Sistema web para revendedor de cursos da Prime Excelência em Trânsito, central
 Revendedor/atendente comercial que cadastra alunos, cria matrículas, acompanha documentação e envia resumos para a escola parceira.
 
 ## Arquitetura implementada
-- **Stack:** React (CRA + craco) + Tailwind + shadcn/ui + recharts + framer-motion + phosphor-icons. Sem chamadas a backend (FastAPI/Mongo do template não são usados nesta fase).
+- **Stack:** React (CRA + craco) + Tailwind + shadcn/ui + Recharts (somente evolução de matrículas em Relatórios) + framer-motion + phosphor-icons. Sem chamadas a backend (FastAPI/Mongo do template não são usados nesta fase).
 - **Camada de dados (`/app/frontend/src`):**
   - `data/seed.js` — dados demonstrativos (8 cursos, 10 alunos, 12 matrículas, 6 campanhas)
   - `lib/storage.js` — localStorage helpers + seed único (`ensureSeeded`)
@@ -29,14 +29,14 @@ Revendedor/atendente comercial que cadastra alunos, cria matrículas, acompanha 
 ## Implementado (até 01/09/2026)
 - Login fake + logout + rota protegida
 - Sidebar responsiva (drawer mobile) com 7 itens de menu
-- Dashboard: KPIs fixos (hoje/semana/mês) + KPIs filtráveis por período + gráficos (evolução, cursos mais vendidos, origem, campanha) + matrículas recentes
+- Dashboard: KPIs fixos (hoje/semana/mês) + KPIs filtráveis por período + rankings em lista (sem gráficos) + matrículas recentes
 - Wizard "Nova Matrícula" completo: seleção de categoria/curso com preço editável e margem em tempo real → dados do aluno com máscaras (CPF/telefone/CEP) e campos dinâmicos (EJA) → checklist de documentos → informações comerciais (origem/campanha/observações internas) → revisão e geração de matrícula com numeração sequencial
 - Detalhe da matrícula: visão geral (editável: status, documentos) + aba "Resumo para Escola" (sem margem/campanha/observações) com copiar para WhatsApp, imprimir e botão de PDF (desabilitado, "em breve")
 - Matrículas: tabela com busca + 5 filtros + 5 presets de período
 - Alunos: lista + detalhe (dados pessoais, histórico, cursos realizados, observações editáveis)
 - Cursos: catálogo por categoria + drawer de edição
 - Campanhas: agregação de matrículas/receita/margem por campanha
-- Relatórios: KPIs + 5 gráficos (período, curso, categoria, campanha, origem)
+- Relatórios: filtros de período, cinco KPIs (inclui ticket médio), um gráfico de evolução das matrículas, destaques executivos e tabelas de cursos, campanhas e origens
 - Correções pós-teste (01/09): perda de dados do aluno ao reaproveitar CPF existente; observações do aluno não apareciam após reload direto; numeração sequencial agora usa máx(número)+1; ajuste de `NavLink end` no sidebar; polimento de rótulos de gráficos e stepper mobile
 
 ## Backlog priorizado
@@ -67,3 +67,8 @@ Revendedor/atendente comercial que cadastra alunos, cria matrículas, acompanha 
 ## 2026-06 — Meta do mês + limpeza de gráficos
 - Novo componente MonthlyGoalCard (barras de progresso R$ e matrículas, meta editável salva em localStorage `crm_monthly_goal`, default R$20.000/10).
 - Removidos gráficos Recharts do Dashboard (evolução 14 dias e barras de cursos) a pedido do usuário; "Cursos mais vendidos" agora é ranking em lista; origem+campanha no mesmo card.
+
+## 2026-09 — Relatórios executivos
+- Simplificada exclusivamente a página `/relatorios`: removidos gráficos de curso, categoria, campanha e origem.
+- Mantido somente o gráfico "Evolução das matrículas" e adicionados KPIs, destaques e rankings tabulares para decisão comercial.
+- Verificado em build de produção e em prévia desktop/mobile, incluindo troca para o filtro de 7 dias sem overflow horizontal.
