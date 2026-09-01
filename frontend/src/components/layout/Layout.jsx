@@ -20,7 +20,7 @@ export default function Layout() {
           <Sidebar onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar onMenuClick={() => setMobileOpen(true)} />
         <main className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
@@ -30,7 +30,7 @@ export default function Layout() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto"
+              className="mx-auto w-full max-w-[1400px] p-4 sm:p-6 lg:p-8"
             >
               <Outlet />
             </motion.div>
