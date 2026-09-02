@@ -19,6 +19,7 @@
 
 - Root directory: `frontend`
 - Package manager: Yarn 1.22.22, conforme `frontend/package.json`.
+- Node.js validado localmente: 24.15.0.
 - Install command: `yarn install --frozen-lockfile`, somente depois que o `yarn.lock` for gerado e versionado.
 - Build command: `yarn build`
 - Output directory: `build`

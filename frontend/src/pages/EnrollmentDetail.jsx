@@ -1,4 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle, Copy, FilePdf, Info, Printer, WarningCircle, WhatsappLogo } from "@phosphor-icons/react";
 import { useData } from "@/context/DataContext";
@@ -10,11 +11,13 @@ import { Button } from "@/components/ui/button";
 import { STATUS_LIST } from "@/constants/options";
 import { formatCurrency, formatDate, formatTime } from "@/lib/format";
 import { buildSchoolWhatsAppUrl, generateSchoolEnrollmentReport, getSchoolAdditionalLines, getSchoolDocumentStatus, openSchoolWhatsApp } from "@/lib/whatsappText";
+import { createEnrollmentDocumentSignedUrl, removeEnrollmentDocument, uploadEnrollmentDocument } from "@/services/documentStorageService";
 
 export default function EnrollmentDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { enrollments, students, courses, schoolWhatsapp, updateEnrollmentStatus, updateEnrollmentDocuments, loading } = useData();
+  const { enrollments, students, courses, schoolWhatsapp, updateEnrollmentStatus, updateEnrollmentDocuments, refreshAll, loading } = useData();
+  const [busyDocumentId, setBusyDocumentId] = useState(null);
   const enrollment = enrollments.find((e) => e.id === id);
 
   if (loading) return <div className="text-slate-400 text-sm">Carregando...</div>;
@@ -65,6 +68,48 @@ export default function EnrollmentDetail() {
 
   const toggleDoc = (doc, checked) => {
     updateEnrollmentDocuments(enrollment.id, { ...enrollment.documents, [doc]: checked }, enrollment.documentRecords);
+  };
+
+  const handleDocumentUpload = async (record, file) => {
+    setBusyDocumentId(record.id);
+    try {
+      const result = await uploadEnrollmentDocument({ enrollmentId: enrollment.id, enrollmentDocumentId: record.id, file });
+      await refreshAll();
+      if (result.cleanupError) toast.warning("Arquivo enviado, mas o arquivo anterior precisa de limpeza manual.");
+      else toast.success("Documento anexado com segurança.");
+    } catch (error) {
+      toast.error(error.message || "Não foi possível anexar o documento.");
+    } finally {
+      setBusyDocumentId(null);
+    }
+  };
+
+  const handleDocumentView = async (record) => {
+    if (!record.filePath) return;
+    setBusyDocumentId(record.id);
+    try {
+      const url = await createEnrollmentDocumentSignedUrl(record.filePath);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      toast.error(error.message || "Não foi possível abrir o documento.");
+    } finally {
+      setBusyDocumentId(null);
+    }
+  };
+
+  const handleDocumentRemove = async (record) => {
+    if (!record.filePath || !window.confirm("Remover este arquivo privado da matrícula?")) return;
+    setBusyDocumentId(record.id);
+    try {
+      const result = await removeEnrollmentDocument({ enrollmentDocumentId: record.id, filePath: record.filePath });
+      await refreshAll();
+      if (result.cleanupError) toast.warning("Documento removido da matrícula, mas o arquivo anterior precisa de limpeza manual.");
+      else toast.success("Documento removido.");
+    } catch (error) {
+      toast.error(error.message || "Não foi possível remover o documento.");
+    } finally {
+      setBusyDocumentId(null);
+    }
   };
 
   return (
@@ -141,7 +186,7 @@ export default function EnrollmentDetail() {
 
           <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-5">
             <p className="text-xs font-semibold uppercase text-slate-500 mb-4">Documentação</p>
-            <DocumentChecklist documents={course?.requiredDocuments || []} values={enrollment.documents} onToggle={toggleDoc} />
+            <DocumentChecklist documents={course?.requiredDocuments || []} values={enrollment.documents} onToggle={toggleDoc} documentRecords={enrollment.documentRecords} onUpload={handleDocumentUpload} onView={handleDocumentView} onRemove={handleDocumentRemove} busyDocumentId={busyDocumentId} />
           </div>
         </TabsContent>
 
