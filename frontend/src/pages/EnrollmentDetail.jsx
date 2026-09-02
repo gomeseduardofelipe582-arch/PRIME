@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Printer, FilePdf } from "@phosphor-icons/react";
+import { ArrowLeft, CheckCircle, Copy, FilePdf, Info, Printer, WarningCircle, WhatsappLogo } from "@phosphor-icons/react";
 import { useData } from "@/context/DataContext";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DocumentChecklist } from "@/components/shared/DocumentChecklist";
@@ -9,7 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Button } from "@/components/ui/button";
 import { STATUS_LIST } from "@/constants/options";
 import { formatCurrency, formatDate, formatTime } from "@/lib/format";
-import { buildSummaryText } from "@/lib/whatsappText";
+import { buildSchoolWhatsAppUrl, generateSchoolEnrollmentReport, getSchoolAdditionalLines, getSchoolDocumentStatus, openSchoolWhatsApp } from "@/lib/whatsappText";
 
 export default function EnrollmentDetail() {
   const { id } = useParams();
@@ -29,11 +29,25 @@ export default function EnrollmentDetail() {
   const student = students.find((s) => s.id === enrollment.studentId);
   const course = courses.find((c) => c.id === enrollment.courseId);
   const margin = enrollment.salePrice - enrollment.repasse;
+  const schoolReport = generateSchoolEnrollmentReport(enrollment, student, course);
+  const schoolDocuments = getSchoolDocumentStatus(enrollment, course);
+  const schoolAdditionalLines = getSchoolAdditionalLines(enrollment, student, course);
+  const hasPendingDocuments = schoolDocuments.pending.length > 0;
 
   const handleCopy = async () => {
-    const text = buildSummaryText(enrollment, student, course);
-    await navigator.clipboard.writeText(text);
-    toast.success("Resumo copiado para a área de transferência!");
+    try {
+      await navigator.clipboard.writeText(schoolReport);
+      toast.success("Relatório copiado");
+    } catch {
+      toast.error("Não foi possível copiar o relatório.");
+    }
+  };
+
+  const handleOpenSchoolWhatsApp = () => {
+    const url = buildSchoolWhatsAppUrl(enrollment, student, course);
+    openSchoolWhatsApp(enrollment, student, course);
+    if (hasPendingDocuments) toast.warning("Esta matrícula possui documentos pendentes.");
+    return url;
   };
 
   const handlePrint = () => window.print();
@@ -132,48 +146,37 @@ export default function EnrollmentDetail() {
         </TabsContent>
 
         <TabsContent value="summary" className="mt-6">
-          <div className="flex flex-wrap gap-3 mb-4 no-print">
-            <Button onClick={handleCopy} className="bg-indigo-600 hover:bg-indigo-500 gap-2" data-testid="copy-whatsapp-button">
-              <Copy size={16} /> Copiar para WhatsApp
-            </Button>
-            <Button onClick={handlePrint} variant="secondary" className="bg-slate-800 hover:bg-slate-700 gap-2" data-testid="print-summary-button">
-              <Printer size={16} /> Imprimir
-            </Button>
-            <Button disabled variant="secondary" className="bg-slate-800/50 text-slate-500 gap-2 cursor-not-allowed" data-testid="generate-pdf-button">
-              <FilePdf size={16} /> Gerar PDF (em breve)
-            </Button>
-          </div>
-          <div id="print-summary" className="rounded-lg border border-slate-800 bg-white text-slate-900 p-8 max-w-2xl font-mono text-sm space-y-4" data-testid="enrollment-summary-card">
-            <div>
-              <p className="font-bold text-base">MATRÍCULA Nº {enrollment.number}</p>
-              <p>Data: {formatDate(enrollment.createdAt)} · Horário: {formatTime(enrollment.createdAt)}</p>
-            </div>
-            <div>
-              <p className="font-bold">CURSO</p>
-              <p>{course?.name}</p>
-            </div>
-            <div>
-              <p className="font-bold">DADOS DO ALUNO</p>
-              <p>Nome: {student?.fullName}</p>
-              <p>CPF: {student?.cpf}</p>
-              <p>Telefone: {student?.phone}</p>
-              <p>E-mail: {student?.email}</p>
-            </div>
-            {course?.extraStudentFields?.some((f) => enrollment.extra?.[f.key]) && (
+          <section aria-labelledby="school-report-title" data-testid="school-report-section">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between no-print">
               <div>
-                <p className="font-bold">INFORMAÇÕES ADICIONAIS</p>
-                {course.extraStudentFields.map((f) => (enrollment.extra[f.key] ? <p key={f.key}>{f.label}: {enrollment.extra[f.key]}</p> : null))}
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-indigo-300">Enviar com segurança</p>
+                <h2 id="school-report-title" className="mt-1 text-xl font-semibold text-slate-50 font-display">Resumo para a escola</h2>
+                <p className="mt-1 text-sm leading-5 text-slate-400">Revise o texto antes de copiar ou abrir o WhatsApp.</p>
               </div>
-            )}
-            <div>
-              <p className="font-bold">DOCUMENTAÇÃO</p>
-              {(course?.requiredDocuments || []).map((doc) => (
-                <p key={doc}>{enrollment.documents[doc] ? "[Recebido]" : "[Pendente]"} {doc}</p>
-              ))}
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={handleCopy} className="gap-2 bg-indigo-600 shadow-lg shadow-indigo-950/30 hover:bg-indigo-500" data-testid="copy-school-report-button"><Copy size={16} aria-hidden="true" /> Copiar relatório</Button>
+                <Button onClick={handleOpenSchoolWhatsApp} variant="secondary" className="gap-2 border border-emerald-400/20 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20" data-testid="open-school-whatsapp-button"><WhatsappLogo size={17} weight="fill" aria-hidden="true" /> Enviar para a escola no WhatsApp</Button>
+                <Button onClick={handlePrint} variant="secondary" className="gap-2 border-slate-700 bg-slate-800 hover:bg-slate-700" data-testid="print-summary-button"><Printer size={16} aria-hidden="true" /> Imprimir</Button>
+                <Button disabled variant="secondary" className="hidden gap-2 bg-slate-800/50 text-slate-500 sm:inline-flex" data-testid="generate-pdf-button"><FilePdf size={16} aria-hidden="true" /> Gerar PDF (em breve)</Button>
+              </div>
             </div>
-          </div>
+
+            {hasPendingDocuments && <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-300/20 bg-amber-500/[0.06] px-4 py-3 text-sm text-amber-100 no-print" role="status" data-testid="school-report-pending-warning"><WarningCircle size={18} className="mt-0.5 shrink-0 text-amber-200" weight="duotone" aria-hidden="true" /><div><p className="font-semibold">Esta matrícula possui documentos pendentes.</p><p className="mt-0.5 text-xs text-amber-100/70">O envio continua disponível; revise os itens abaixo e anexe arquivos manualmente no WhatsApp, se necessário.</p></div></div>}
+
+            <div id="print-summary" className="max-w-3xl rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-xl shadow-slate-950/20 sm:p-8" data-testid="enrollment-summary-card">
+              <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-700">Matrícula Prime</p><p className="mt-2 text-xl font-bold tracking-tight text-slate-950">Matrícula nº {enrollment.number}</p></div><div className="text-left text-sm text-slate-600 sm:text-right"><p>Data: {formatDate(enrollment.createdAt)}</p><p>Horário: {formatTime(enrollment.createdAt)}</p></div></div>
+              <div className="mt-6 grid gap-6 sm:grid-cols-2"><ReportBlock title="Curso"><p className="font-semibold text-slate-950">{course?.name || "—"}</p><p>Categoria: {course?.category || "—"}</p></ReportBlock><ReportBlock title="Dados do aluno"><p className="font-semibold text-slate-950">{student?.fullName || "—"}</p><p>CPF: {student?.cpf || "—"}</p><p>Telefone: {student?.phone || "—"}</p><p className="break-all">E-mail: {student?.email || "—"}</p></ReportBlock></div>
+              {schoolAdditionalLines.length > 0 && <div className="mt-6"><ReportBlock title="Informações adicionais">{schoolAdditionalLines.map((line) => <p key={line}>{line}</p>)}</ReportBlock></div>}
+              <div className="mt-6 border-t border-slate-200 pt-6"><div className="mb-3 flex items-center justify-between gap-3"><p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-700">Documentação</p><span className={`text-xs font-semibold ${schoolDocuments.complete ? "text-emerald-700" : "text-amber-700"}`}>{schoolDocuments.complete ? "Completa" : "Pendente"}</span></div><div className="space-y-2">{schoolDocuments.documents.length ? schoolDocuments.documents.map((document) => { const received = Boolean(enrollment.documents?.[document]); return <div key={document} className="flex items-center justify-between gap-3 text-sm"><span className="flex min-w-0 items-center gap-2"><span className={received ? "text-emerald-700" : "text-amber-700"}>{received ? <CheckCircle size={16} weight="fill" aria-hidden="true" /> : <Info size={16} weight="fill" aria-hidden="true" />}</span><span className="truncate">{document}</span></span><span className={`shrink-0 text-xs font-semibold ${received ? "text-emerald-700" : "text-amber-700"}`}>{received ? "Recebido" : "Pendente"}</span></div>; }) : <p className="text-sm text-slate-500">Nenhum documento configurado para este curso.</p>}</div></div>
+            </div>
+          </section>
         </TabsContent>
       </Tabs>
     </div>
   );
+}
+
+
+function ReportBlock({ title, children }) {
+  return <div className="space-y-1.5 text-sm leading-5 text-slate-600"><p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-700">{title}</p>{children}</div>;
 }
