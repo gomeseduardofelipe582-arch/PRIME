@@ -1,5 +1,26 @@
 import { requireSupabase, throwIfError } from "@/lib/supabase";
 
+function parsePositiveInteger(value, label, suffixPattern) {
+  const text = String(value ?? "").trim();
+  if (!text || text === "Não informado") return null;
+  const match = text.match(suffixPattern);
+  if (!match || Number(match[1]) < 1) {
+    throw new Error(`${label} deve ser um número positivo no formato esperado.`);
+  }
+  return Number(match[1]);
+}
+
+function parseDeadline(value) {
+  const text = String(value ?? "").trim();
+  if (!text || text === "Não informado") return { minimum_completion_days: null, maximum_completion_days: null };
+  const match = text.match(/^(\d+)(?:\s*a\s*(\d+))?\s*dias?$/i);
+  if (!match || Number(match[1]) < 1 || (match[2] && Number(match[2]) < Number(match[1]))) {
+    throw new Error("Prazo deve usar o formato “X dia(s)” ou “X a Y dias”.");
+  }
+  const minimum = Number(match[1]);
+  return { minimum_completion_days: minimum, maximum_completion_days: match[2] ? Number(match[2]) : minimum };
+}
+
 function mapCourse(row) {
   const fields = [...(row.course_required_fields || [])].filter((item) => item.active).sort((a, b) => a.sort_order - b.sort_order).map((item) => ({
     id: item.id, key: item.field_key, label: item.label, type: item.field_type, required: item.required,
@@ -34,14 +55,22 @@ export async function getCourse(id) {
 }
 
 export async function updateCourse(id, patch) {
+  const workload = patch.durationHours === undefined
+    ? {}
+    : { workload_hours: parsePositiveInteger(patch.durationHours, "Carga horária", /^(\d+)\s*h?$/i) };
+  const deadline = patch.deadline === undefined ? {} : parseDeadline(patch.deadline);
   const row = {
+    ...(patch.name !== undefined && { name: String(patch.name).trim() }),
     ...(patch.description !== undefined && { description: patch.description }),
     ...(patch.requirements !== undefined && { requirements_text: patch.requirements }),
     ...(patch.importantInfo !== undefined && { important_notes: patch.importantInfo }),
     ...(patch.repasse !== undefined && { repass_amount: patch.repasse }),
     ...(patch.suggestedPrice !== undefined && { suggested_price: patch.suggestedPrice }),
     ...(patch.active !== undefined && { active: patch.active }),
+    ...workload,
+    ...deadline,
   };
+  if (patch.name !== undefined && !row.name) throw new Error("Nome do curso é obrigatório.");
   const { data, error } = await requireSupabase().from("courses").update(row).eq("id", id).select("*, course_categories(name), course_required_fields(*), course_required_documents(*)").single();
   throwIfError(error);
   return mapCourse(data);
