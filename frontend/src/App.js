@@ -16,7 +16,8 @@ import Reports from "@/pages/Reports";
 import "@/App.css";
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <div className="min-h-screen bg-slate-950 p-8 text-sm text-slate-400">Restaurando sessão...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return children;
 }

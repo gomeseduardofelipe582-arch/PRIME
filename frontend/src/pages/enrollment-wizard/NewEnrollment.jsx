@@ -17,6 +17,7 @@ const initialData = {
   extra: {},
   documents: {},
   commercial: { origin: "", campaign: "", notes: "" },
+  updateExistingStudent: false,
 };
 
 export default function NewEnrollment() {
@@ -39,6 +40,7 @@ export default function NewEnrollment() {
       extra: data.extra,
       documents: data.documents,
       commercial: data.commercial,
+      updateExistingStudent: data.updateExistingStudent,
     });
     toast.success(`Matrícula Nº ${enrollment.number} criada com sucesso!`);
     navigate(`/matriculas/${enrollment.id}`);
