@@ -95,13 +95,13 @@ export function buildSummaryText(enrollment, student, course) {
   return generateSchoolEnrollmentReport(enrollment, student, course);
 }
 
-export function buildSchoolWhatsAppUrl(enrollment, student, course) {
+export function buildSchoolWhatsAppUrl(enrollment, student, course, schoolWhatsapp = SCHOOL_WHATSAPP) {
   const message = generateSchoolEnrollmentReport(enrollment, student, course);
-  return `https://wa.me/${SCHOOL_WHATSAPP}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${schoolWhatsapp || SCHOOL_WHATSAPP}?text=${encodeURIComponent(message)}`;
 }
 
-export function openSchoolWhatsApp(enrollment, student, course) {
-  const url = buildSchoolWhatsAppUrl(enrollment, student, course);
+export function openSchoolWhatsApp(enrollment, student, course, schoolWhatsapp = SCHOOL_WHATSAPP) {
+  const url = buildSchoolWhatsAppUrl(enrollment, student, course, schoolWhatsapp);
   if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer");
   return url;
 }

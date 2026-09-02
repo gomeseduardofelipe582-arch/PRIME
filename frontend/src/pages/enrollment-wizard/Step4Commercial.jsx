@@ -1,6 +1,5 @@
 import { toast } from "sonner";
 import { useData } from "@/context/DataContext";
-import { LEAD_SOURCES } from "@/constants/options";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +8,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { cn } from "@/lib/utils";
 
 export function Step4Commercial({ data, update, onNext, onBack }) {
-  const { campaigns } = useData();
+  const { campaigns, leadSources } = useData();
   const commercial = data.commercial;
   const setCommercial = (patch) => update({ commercial: { ...commercial, ...patch } });
 
@@ -31,8 +30,8 @@ export function Step4Commercial({ data, update, onNext, onBack }) {
               <SelectValue placeholder="Selecione a origem" />
             </SelectTrigger>
             <SelectContent className="bg-slate-900 border-slate-800 text-slate-100">
-              {LEAD_SOURCES.map((o) => (
-                <SelectItem key={o} value={o} data-testid={`lead-origin-option-${o}`}>{o}</SelectItem>
+              {leadSources.map((source) => (
+                <SelectItem key={source.id} value={source.name} data-testid={`lead-origin-option-${source.slug}`}>{source.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>

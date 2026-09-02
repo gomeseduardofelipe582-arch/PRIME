@@ -14,7 +14,7 @@ import { buildSchoolWhatsAppUrl, generateSchoolEnrollmentReport, getSchoolAdditi
 export default function EnrollmentDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { enrollments, students, courses, updateEnrollmentStatus, updateEnrollmentDocuments, loading } = useData();
+  const { enrollments, students, courses, schoolWhatsapp, updateEnrollmentStatus, updateEnrollmentDocuments, loading } = useData();
   const enrollment = enrollments.find((e) => e.id === id);
 
   if (loading) return <div className="text-slate-400 text-sm">Carregando...</div>;
@@ -28,7 +28,7 @@ export default function EnrollmentDetail() {
 
   const student = students.find((s) => s.id === enrollment.studentId);
   const course = courses.find((c) => c.id === enrollment.courseId);
-  const margin = enrollment.salePrice - enrollment.repasse;
+  const margin = enrollment.repasse == null ? null : enrollment.salePrice - enrollment.repasse;
   const schoolReport = generateSchoolEnrollmentReport(enrollment, student, course);
   const schoolDocuments = getSchoolDocumentStatus(enrollment, course);
   const schoolAdditionalLines = getSchoolAdditionalLines(enrollment, student, course);
@@ -44,8 +44,8 @@ export default function EnrollmentDetail() {
   };
 
   const handleOpenSchoolWhatsApp = () => {
-    const url = buildSchoolWhatsAppUrl(enrollment, student, course);
-    openSchoolWhatsApp(enrollment, student, course);
+    const url = buildSchoolWhatsAppUrl(enrollment, student, course, schoolWhatsapp);
+    openSchoolWhatsApp(enrollment, student, course, schoolWhatsapp);
     if (hasPendingDocuments) toast.warning("Esta matrícula possui documentos pendentes.");
     return url;
   };
@@ -64,7 +64,7 @@ export default function EnrollmentDetail() {
   };
 
   const toggleDoc = (doc, checked) => {
-    updateEnrollmentDocuments(enrollment.id, { ...enrollment.documents, [doc]: checked });
+    updateEnrollmentDocuments(enrollment.id, { ...enrollment.documents, [doc]: checked }, enrollment.documentRecords);
   };
 
   return (
@@ -110,11 +110,11 @@ export default function EnrollmentDetail() {
             </div>
             <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-5">
               <p className="text-xs text-slate-500">Repasse à escola</p>
-              <p className="text-xl font-bold text-amber-400 mt-1">{formatCurrency(enrollment.repasse)}</p>
+              <p className="text-xl font-bold text-amber-400 mt-1">{enrollment.repasse == null ? "Não informado" : formatCurrency(enrollment.repasse)}</p>
             </div>
             <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-5">
               <p className="text-xs text-slate-500">Margem</p>
-              <p className="text-xl font-bold text-emerald-400 mt-1">{formatCurrency(margin)}</p>
+              <p className="text-xl font-bold text-emerald-400 mt-1">{margin == null ? "Não informado" : formatCurrency(margin)}</p>
             </div>
           </div>
 

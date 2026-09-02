@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { STATUS_LIST, LEAD_SOURCES, CATEGORIES } from "@/constants/options";
+import { STATUS_LIST } from "@/constants/options";
 import { getPeriodRange, filterByRange, sumField } from "@/lib/analytics";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { getStatusAction } from "@/lib/enrollmentActions";
@@ -17,7 +17,7 @@ import { getStatusAction } from "@/lib/enrollmentActions";
 const PERIOD_LABELS = { todos: "Todos", hoje: "Hoje", "7dias": "7 dias", "30dias": "30 dias", mes: "Este mês", personalizado: "Personalizado" };
 
 export default function Enrollments() {
-  const { enrollments, students, courses } = useData();
+  const { enrollments, students, courses, leadSources } = useData();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -33,6 +33,7 @@ export default function Enrollments() {
   const courseOf = useCallback((id) => courses.find((c) => c.id === id), [courses]);
 
   const campaignNames = useMemo(() => Array.from(new Set(enrollments.map((e) => e.campaign).filter(Boolean))), [enrollments]);
+  const categories = useMemo(() => Array.from(new Set(courses.map((course) => course.category))), [courses]);
 
   const filtered = useMemo(() => {
     let list = [...enrollments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -115,9 +116,9 @@ export default function Enrollments() {
         {advancedOpen && (
           <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-800/80 pt-4 sm:grid-cols-2 xl:grid-cols-5" data-testid="enrollments-advanced-filters">
             <FilterSelect label="Status" value={statusFilter} onChange={setStatusFilter} allLabel="Todos os status" options={STATUS_LIST.map((item) => ({ value: item.key, label: item.label }))} testId="enrollments-status-filter" />
-            <FilterSelect label="Categoria" value={categoryFilter} onChange={setCategoryFilter} allLabel="Todas as categorias" options={CATEGORIES.map((item) => ({ value: item, label: item }))} testId="enrollments-category-filter" />
+            <FilterSelect label="Categoria" value={categoryFilter} onChange={setCategoryFilter} allLabel="Todas as categorias" options={categories.map((item) => ({ value: item, label: item }))} testId="enrollments-category-filter" />
             <FilterSelect label="Curso" value={courseFilter} onChange={setCourseFilter} allLabel="Todos os cursos" options={courses.map((item) => ({ value: item.id, label: item.name }))} testId="enrollments-course-filter" />
-            <FilterSelect label="Origem" value={originFilter} onChange={setOriginFilter} allLabel="Todas as origens" options={LEAD_SOURCES.map((item) => ({ value: item, label: item }))} testId="enrollments-origin-filter" />
+            <FilterSelect label="Origem" value={originFilter} onChange={setOriginFilter} allLabel="Todas as origens" options={leadSources.map((item) => ({ value: item.name, label: item.name }))} testId="enrollments-origin-filter" />
             <FilterSelect label="Campanha" value={campaignFilter} onChange={setCampaignFilter} allLabel="Todas as campanhas" options={campaignNames.map((item) => ({ value: item, label: item }))} testId="enrollments-campaign-filter" />
           </div>
         )}

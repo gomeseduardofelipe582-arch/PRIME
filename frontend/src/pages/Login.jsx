@@ -1,20 +1,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, configured } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const [submitting, setSubmitting] = useState(false);
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login(email || "revendedor@primeexcelencia.com.br");
-    navigate("/dashboard");
+    if (!configured) { toast.error("Supabase não configurado. Consulte frontend/.env.example."); return; }
+    setSubmitting(true);
+    try { await login(email, password); navigate("/dashboard"); }
+    catch (error) { toast.error(error.message || "Não foi possível entrar."); }
+    finally { setSubmitting(false); }
   };
 
   return (
@@ -37,7 +42,7 @@ export default function Login() {
           <div>
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-indigo-600 text-sm font-bold text-white font-display mb-4">PE</div>
             <h1 className="text-2xl font-bold text-slate-50 font-display">Entrar no painel</h1>
-            <p className="text-sm text-slate-400 mt-1">Acesso do revendedor. Use qualquer e-mail para esta versão de demonstração.</p>
+            <p className="text-sm text-slate-400 mt-1">Acesso administrativo seguro com e-mail e senha.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email" className="text-slate-300">E-mail</Label>
@@ -63,8 +68,8 @@ export default function Login() {
               data-testid="login-password-input"
             />
           </div>
-          <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500" data-testid="login-submit-button">
-            Entrar
+          <Button type="submit" disabled={submitting || !configured} className="w-full bg-indigo-600 hover:bg-indigo-500" data-testid="login-submit-button">
+            {submitting ? "Entrando..." : "Entrar"}
           </Button>
         </form>
       </div>

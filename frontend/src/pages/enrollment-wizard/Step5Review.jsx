@@ -6,7 +6,7 @@ import { formatCurrency } from "@/lib/format";
 export function Step5Review({ data, onBack, onFinish }) {
   const { courses } = useData();
   const course = courses.find((c) => c.id === data.courseId);
-  const margin = (Number(data.salePrice) || 0) - (course?.repasse || 0);
+  const margin = course?.repasse == null ? null : (Number(data.salePrice) || 0) - course.repasse;
   const docsTotal = course?.requiredDocuments?.length || 0;
   const docsDone = Object.values(data.documents).filter(Boolean).length;
 
@@ -17,7 +17,7 @@ export function Step5Review({ data, onBack, onFinish }) {
           <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Curso</p>
           <p className="text-sm text-slate-100">{course?.name}</p>
           <p className="text-xs text-slate-500 mt-1">
-            Venda {formatCurrency(data.salePrice)} · Repasse {formatCurrency(course?.repasse)} · Margem <span className="text-emerald-400 font-medium">{formatCurrency(margin)}</span>
+            Venda {formatCurrency(data.salePrice)} · Repasse {course?.repasse == null ? "Não informado" : formatCurrency(course.repasse)} · Margem <span className="text-emerald-400 font-medium">{margin == null ? "Não informado" : formatCurrency(margin)}</span>
           </p>
         </div>
         <div className="p-4">

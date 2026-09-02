@@ -1,20 +1,29 @@
-import { readCollection, writeCollection, KEYS, ensureSeeded } from "@/lib/storage";
+import { fromStudentRow, normalizeCpf, toStudentRow } from "@/lib/normalizers";
+import { requireSupabase, throwIfError } from "@/lib/supabase";
 
 export async function listStudents() {
-  ensureSeeded();
-  return readCollection(KEYS.students, []);
+  const { data, error } = await requireSupabase().from("students").select("*").order("full_name");
+  throwIfError(error);
+  return data.map(fromStudentRow);
 }
 
 export async function getStudent(id) {
-  const students = await listStudents();
-  return students.find((s) => s.id === id) || null;
+  const { data, error } = await requireSupabase().from("students").select("*").eq("id", id).maybeSingle();
+  throwIfError(error);
+  return fromStudentRow(data);
 }
 
 export async function updateStudent(id, patch) {
-  const students = await listStudents();
-  const idx = students.findIndex((s) => s.id === id);
-  if (idx === -1) return null;
-  students[idx] = { ...students[idx], ...patch };
-  writeCollection(KEYS.students, students);
-  return students[idx];
+  const row = patch.notes === undefined ? toStudentRow(patch) : { notes: patch.notes };
+  const { data, error } = await requireSupabase().from("students").update(row).eq("id", id).select().single();
+  throwIfError(error);
+  return fromStudentRow(data);
+}
+
+export async function findStudentByCpf(cpf) {
+  const normalized = normalizeCpf(cpf);
+  if (normalized.length !== 11) return null;
+  const { data, error } = await requireSupabase().from("students").select("*").eq("cpf_normalized", normalized).maybeSingle();
+  throwIfError(error);
+  return fromStudentRow(data);
 }

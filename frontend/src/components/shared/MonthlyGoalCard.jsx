@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Target, PencilSimple, Check, X, ArrowUpRight } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
-import { readCollection, writeCollection } from "@/lib/storage";
+import { getMonthlyGoal, saveMonthlyGoal } from "@/services/goalService";
 
-const GOAL_KEY = "crm_monthly_goal";
 const DEFAULT_GOAL = { revenue: 20000, count: 10 };
 
 function GoalBar({ label, current, target, display, color, testId }) {
@@ -40,9 +39,18 @@ function GoalBar({ label, current, target, display, color, testId }) {
 }
 
 export function MonthlyGoalCard({ monthRevenue, monthCount }) {
-  const [goal, setGoal] = useState(() => readCollection(GOAL_KEY, DEFAULT_GOAL));
+  const [goal, setGoal] = useState(DEFAULT_GOAL);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(goal);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const now = new Date();
+    getMonthlyGoal(now.getFullYear(), now.getMonth() + 1)
+      .then((saved) => { if (saved) { setGoal(saved); setDraft(saved); } })
+      .catch((error) => toast.error(error.message || "Não foi possível carregar a meta mensal."))
+      .finally(() => setLoading(false));
+  }, []);
 
   const startEditing = () => {
     setDraft(goal);
@@ -54,15 +62,16 @@ export function MonthlyGoalCard({ monthRevenue, monthCount }) {
     setEditing(false);
   };
 
-  const save = () => {
+  const save = async () => {
     const next = {
       revenue: Math.max(0, Number(draft.revenue) || 0),
       count: Math.max(0, Number(draft.count) || 0),
     };
-    writeCollection(GOAL_KEY, next);
-    setGoal(next);
-    setEditing(false);
-    toast.success("Meta do mês atualizada.");
+    try {
+      const now = new Date();
+      const saved = await saveMonthlyGoal(now.getFullYear(), now.getMonth() + 1, next);
+      setGoal(saved); setEditing(false); toast.success("Meta do mês atualizada.");
+    } catch (error) { toast.error(error.message || "Não foi possível salvar a meta mensal."); }
   };
 
   return (
@@ -106,10 +115,10 @@ export function MonthlyGoalCard({ monthRevenue, monthCount }) {
         </div>
       )}
 
-      <div className="space-y-5">
+      {loading ? <p className="text-xs text-slate-400">Carregando meta...</p> : <div className="space-y-5">
         <GoalBar label="Vendas (R$)" current={monthRevenue} target={goal.revenue} display={formatCurrency} color="bg-indigo-400" testId="monthly-goal-revenue" />
         <GoalBar label="Matrículas" current={monthCount} target={goal.count} display={(v) => `${v}`} color="bg-cyan-400" testId="monthly-goal-count" />
-      </div>
+      </div>}
       <div className="mt-5 flex items-center gap-2 border-t border-indigo-300/10 pt-4 text-xs text-indigo-200/80">
         <ArrowUpRight size={14} aria-hidden="true" />
         <span>Use os filtros abaixo para analisar o desempenho por período.</span>

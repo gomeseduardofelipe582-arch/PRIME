@@ -3,33 +3,51 @@ import * as courseService from "@/services/courseService";
 import * as studentService from "@/services/studentService";
 import * as enrollmentService from "@/services/enrollmentService";
 import * as campaignService from "@/services/campaignService";
+import * as sourceService from "@/services/sourceService";
+import * as settingsService from "@/services/settingsService";
+import { useAuth } from "@/context/AuthContext";
 
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
+  const { isAuthenticated, configured } = useAuth();
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
+  const [leadSources, setLeadSources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [schoolWhatsapp, setSchoolWhatsapp] = useState("5548996726611");
 
   const refreshAll = useCallback(async () => {
-    const [c, s, e, cmp] = await Promise.all([
+    setLoading(true);
+    setError(null);
+    try {
+    const [c, s, e, cmp, sources, schoolSetting] = await Promise.all([
       courseService.listCourses(),
       studentService.listStudents(),
       enrollmentService.listEnrollments(),
       campaignService.listCampaigns(),
+      sourceService.listLeadSources(),
+      settingsService.getAppSetting("school_whatsapp"),
     ]);
     setCourses(c);
     setStudents(s);
     setEnrollments(e);
     setCampaigns(cmp);
-    setLoading(false);
+    setLeadSources(sources);
+    const configuredPhone = typeof schoolSetting === "string" ? schoolSetting : schoolSetting?.phone;
+    if (configuredPhone) setSchoolWhatsapp(String(configuredPhone).replace(/\D/g, ""));
+    } catch (nextError) {
+      setError(nextError);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
+    if (!configured || !isAuthenticated) { setLoading(false); return; }
     refreshAll();
-  }, [refreshAll]);
+  }, [configured, isAuthenticated, refreshAll]);
 
   const createEnrollment = async (payload) => {
     const enrollment = await enrollmentService.createEnrollment(payload);
@@ -42,8 +60,8 @@ export function DataProvider({ children }) {
     await refreshAll();
   };
 
-  const updateEnrollmentDocuments = async (id, documents) => {
-    await enrollmentService.updateDocuments(id, documents);
+  const updateEnrollmentDocuments = async (id, documents, documentRecords) => {
+    await enrollmentService.updateDocuments(id, documents, documentRecords);
     await refreshAll();
   };
 
@@ -57,6 +75,8 @@ export function DataProvider({ children }) {
     await refreshAll();
   };
 
+  const findStudentByCpf = (cpf) => studentService.findStudentByCpf(cpf);
+
   return (
     <DataContext.Provider
       value={{
@@ -64,14 +84,20 @@ export function DataProvider({ children }) {
         students,
         enrollments,
         campaigns,
+        leadSources,
+        schoolWhatsapp,
         loading,
+        error,
+        refreshAll,
         createEnrollment,
         updateEnrollmentStatus,
         updateEnrollmentDocuments,
         updateCourse,
         updateStudentNotes,
+        findStudentByCpf,
       }}
     >
+      {error && <div role="alert" className="fixed right-4 top-4 z-50 max-w-md rounded-lg border border-rose-400/30 bg-rose-950 px-4 py-3 text-sm text-rose-100 shadow-xl">{error.message || "Não foi possível carregar os dados. Tente entrar novamente."}</div>}
       {children}
     </DataContext.Provider>
   );

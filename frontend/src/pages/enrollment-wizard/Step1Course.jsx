@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useData } from "@/context/DataContext";
-import { CATEGORIES } from "@/constants/options";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 export function Step1Course({ data, update, onNext }) {
   const { courses } = useData();
+  const categories = Array.from(new Set(courses.map((course) => course.category)));
   const [category, setCategory] = useState(() => courses.find((c) => c.id === data.courseId)?.category || "");
   const selectedCourse = courses.find((c) => c.id === data.courseId);
 
@@ -19,7 +19,7 @@ export function Step1Course({ data, update, onNext }) {
     update({ courseId: course.id, salePrice: course.suggestedPrice, documents: {}, extra: {} });
   };
 
-  const margin = (Number(data.salePrice) || 0) - (selectedCourse?.repasse || 0);
+  const margin = selectedCourse?.repasse == null ? null : (Number(data.salePrice) || 0) - selectedCourse.repasse;
 
   const handleNext = () => {
     if (!data.courseId) {
@@ -34,7 +34,7 @@ export function Step1Course({ data, update, onNext }) {
       <div className="space-y-2">
         <Label className="text-slate-300">Categoria</Label>
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               type="button"
@@ -84,8 +84,8 @@ export function Step1Course({ data, update, onNext }) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
             <div><p className="text-slate-500">Carga horária</p><p className="text-slate-200 font-medium mt-0.5">{selectedCourse.durationHours}</p></div>
             <div><p className="text-slate-500">Prazo</p><p className="text-slate-200 font-medium mt-0.5">{selectedCourse.deadline}</p></div>
-            <div><p className="text-slate-500">Repasse à escola</p><p className="text-amber-400 font-medium mt-0.5">{formatCurrency(selectedCourse.repasse)}</p></div>
-            <div><p className="text-slate-500">Preço sugerido</p><p className="text-slate-200 font-medium mt-0.5">{formatCurrency(selectedCourse.suggestedPrice)}</p></div>
+            <div><p className="text-slate-500">Repasse à escola</p><p className="text-amber-400 font-medium mt-0.5">{selectedCourse.repasse == null ? "Não informado" : formatCurrency(selectedCourse.repasse)}</p></div>
+            <div><p className="text-slate-500">Preço sugerido</p><p className="text-slate-200 font-medium mt-0.5">{selectedCourse.suggestedPrice == null ? "Não informado" : formatCurrency(selectedCourse.suggestedPrice)}</p></div>
           </div>
           <div className="grid sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
             <div className="space-y-2">
@@ -102,7 +102,7 @@ export function Step1Course({ data, update, onNext }) {
             <div>
               <Label className="text-slate-300">Margem estimada</Label>
               <p className={cn("text-2xl font-bold font-display mt-2", margin >= 0 ? "text-emerald-400" : "text-rose-400")} data-testid="estimated-margin-value">
-                {formatCurrency(margin)}
+                {margin == null ? "Não informado" : formatCurrency(margin)}
               </p>
             </div>
           </div>
